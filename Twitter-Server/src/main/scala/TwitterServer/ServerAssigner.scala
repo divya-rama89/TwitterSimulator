@@ -51,13 +51,18 @@ class ServerAssigner(followersTable: HashMap[Int, ListBuffer[Int]], ac: ActorSys
     }
   }
 
-  def returnQueue(requestorID: Int) {
+ def returnQueue(requestorID: Int) {
     //return the queue for requestorID
     var requiredQ = pagesTable.getOrElse(requestorID, null)
-  //  if (requiredQ != null) {
-    //  var x : ActorRef = context.actorRef("../"+(requestorID)) 
-    //  x ! mugdha(requestorID)
-   // }
+    if (requiredQ != null) {
+      
+      // var recieveBckQueue = context.actorSelection("akka://TwitterServer/user/" + requestorID)
+       var recieveBckQueueActorRef=context.actorFor("../"+(requestorID))
+       recieveBckQueueActorRef ! receiveBackTwitQueue(requiredQ)
+       
+       // var x : ActorRef = context.actor("../"+(requestorID)) 
+      //x ! receiveBackTwitQueue(requestorID)*/
+    }
   }
 
   def updateTweetTable(tweetTableLatest: HashMap[Int, Tuple2[Int, String]]) {
