@@ -5,7 +5,7 @@ import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Queue
 
-class mugdha(que : Queue[Tuple2[Int, Int]])
+case class receiveBackTwitQueue(que : Queue[Tuple2[Int, Int]])
 
 class TwitterClient(ac: ActorSystem)  extends Actor{
 
@@ -14,6 +14,13 @@ class TwitterClient(ac: ActorSystem)  extends Actor{
 
     // DEBUG
     case "test" => callTest(sender)
+    case receiveBackTwitQueue(que : Queue[Tuple2[Int, Int]])=>
+      {print("receiving back the twits from server yahoooooo")
+        for(x<-que)
+        {
+          print(x+",")
+        }
+      }
   }
 
   
