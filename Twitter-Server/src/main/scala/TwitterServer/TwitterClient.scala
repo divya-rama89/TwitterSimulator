@@ -5,7 +5,9 @@ import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Queue
 
-case class receiveBackTwitQueue(que : Queue[Tuple2[Int, Int]])
+// This file is purely for testing purposes
+
+case class receiveBackTweetQueue(que : Queue[Tuple2[String, Int]])
 
 class TwitterClient(ac: ActorSystem)  extends Actor{
 
@@ -14,8 +16,8 @@ class TwitterClient(ac: ActorSystem)  extends Actor{
 
     // DEBUG
     case "test" => callTest(sender)
-    case receiveBackTwitQueue(que : Queue[Tuple2[Int, Int]])=>
-      {print("receiving back the twits from server yahoooooo")
+    case receiveBackTweetQueue(que : Queue[Tuple2[String, Int]])=>
+      {print("receiving back the tweets from server yahoooooo")
         for(x<-que)
         {
           print(x+",")
@@ -25,8 +27,10 @@ class TwitterClient(ac: ActorSystem)  extends Actor{
 
   
   def callTest(sender: ActorRef) {
-    println("I am alive")
+    println("I am a pseudo tweeter! :)")
     sender ! tweet("Hi")
+    sender ! tweet("Is this 140 characters long or do I need to go on and on?")
+    Thread.sleep(500)
     sender ! readStatus()
   }
   
