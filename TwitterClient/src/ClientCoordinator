@@ -1,6 +1,7 @@
 import akka.actor.Actor
 import akka.actor.ActorSystem
 import akka.actor.Props
+import akka.actor.PoisonPill
 
 class ClientCoordinator(totalUsers: Int, numClient: Int, clientID: Int, ServerIP: String, ServerPort: String, sys: ActorSystem) extends Actor {
 
@@ -8,11 +9,11 @@ class ClientCoordinator(totalUsers: Int, numClient: Int, clientID: Int, ServerIP
 
   if (clientID + 1 == numClient) {
     for (i: Int <- (clientID * numUsers).toInt to totalUsers.toInt - 1) {
-      context.actorOf(Props(new ClientWorker(i.toInt, totalUsers, ServerIP, ServerPort, sys)), name = i.toString)
+      context.actorOf(Props(new ClientWorker(i.toInt, totalUsers, ServerIP, ServerPort, sys, clientID)), name = i.toString)
     }
   } else {
     for (i: Int <- (clientID * numUsers).toInt to (numUsers * (clientID + 1) - 1).toInt) {
-      context.actorOf(Props(new ClientWorker(i.toInt, totalUsers, ServerIP, ServerPort, sys)), name = i.toString)
+      context.actorOf(Props(new ClientWorker(i.toInt, totalUsers, ServerIP, ServerPort, sys, clientID)), name = i.toString)
     }
   }
   
@@ -27,10 +28,15 @@ class ClientCoordinator(totalUsers: Int, numClient: Int, clientID: Int, ServerIP
       }
 
     case "die" =>
+      println("="*20)
+      println("Shutting Down")
+      println("="*20)
       for (child <- context.children) {
-        child ! "die"
+        child ! PoisonPill
       }
+      //server ! "ThankYou"
+      sys.shutdown()
 
     case _ => println("default case for Client Coordinator")
   }
-}
+} 
