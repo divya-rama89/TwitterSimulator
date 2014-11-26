@@ -20,7 +20,7 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
   var ClientList: List[ActorRef] = List()
 
   // constants
-  val NUMBEROFSERVERASSIGNERS = 64
+  val NUMBEROFSERVERASSIGNERS = 3
   val FOLLOWERSLIMIT = 10
   val DEBUG = false
   //val TWEETLIMIT = Int.MaxValue 
@@ -32,18 +32,27 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
   // Round Robin assign message
 
   def receive = {
+
     case "Init" => init() //generate actors + users/followers table
-    case "done" => incInitCtr()
+
     case "hi" =>
       println("Received Communication from some client")
       incClientCtr(sender)
     //case tweet(tweetText: String) => routeTweetMessage(sender,tweetText)
-    case ("TweetReq", text: String) => println("Tweet Received " + text + sender.path)
+      
+    case "done" => incInitCtr()
+
+    case ("TweetReq", text: String) => 
+      println("Tweet Received:::::" + text)
+      routeTweetMessage(sender, text)
+      
     case "request" => routeStatusRequest(sender)
+    
     /*case "test" => 
       println(sender.path)
       sender ! "ack"*/
-    case _ => println("Received communication from " + sender.path)
+
+    case _ => println("Received unknown communication from " + sender.path)
   }
 
   def init() {
@@ -91,29 +100,23 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
       println("Client: " + sender.path + " initialised!")
     }
     if (initClientCtr >= numClients) {
-      println("All Clients have started ... " + ClientList .mkString("::::"))
-      for( coordinator <- ClientList ){
-    	coordinator ! "start"
+      println("All Clients have started ... " + ClientList.mkString("::::"))
+      for (coordinator <- ClientList) {
+        coordinator ! "start"
       }
     }
   }
 
   def routeTweetMessage(sender: ActorRef, tweetText: String) {
     // generate tweet ID, put onto tweet table and pass to worker
-    if (DEBUG) {
+    if (true) {
       println("tweet : " + tweetText)
     }
     tweetIDCtr += 1
 
-    if (DEBUG) {
-      println("inside routeTweet of router..ownerOfTweet- " + sender.path.toString().substring(26).toInt)
-    }
-
     val senderpath = sender.path.toString()
     var n = senderpath.lastIndexOf("/");
     var ownerID = senderpath.substring(n + 1).toInt
-
-    // TODO: add a queue to make it fifo
 
     //tweetTable.put(tweetIDCtr, tweetInfo)
 
