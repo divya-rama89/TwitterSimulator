@@ -17,6 +17,7 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
   var tweetIDCtr: Int = 0
   var initCtr: Int = 0
   var initClientCtr: Int = 0
+  var doneCtr: Int = 0
   var ClientList: List[ActorRef] = List()
 
   // constants
@@ -43,7 +44,7 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
     case "done" => incInitCtr()
 
     case ("TweetReq", text: String) => 
-      println("Tweet Received:::::" + text)
+     // println("Tweet Received:::::" + text)
       routeTweetMessage(sender, text)
       
     case "request" => routeStatusRequest(sender)
@@ -51,7 +52,13 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
     /*case "test" => 
       println(sender.path)
       sender ! "ack"*/
-
+    case "stopCode" =>  
+      for (coordinator <- ClientList) {
+        coordinator ! "die"
+      }
+      
+    case "ThankYou" => incDoneCtr()  
+    
     case _ => println("Received unknown communication from " + sender.path)
   }
 
@@ -71,6 +78,8 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
     if (DEBUG) {
       println("server init done")
     }
+    
+     var timer = ac.actorOf(Props(new timerActor(self)), "timerActor")
   }
 
   def incInitCtr() {
@@ -106,10 +115,26 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
       }
     }
   }
+  
+  def incDoneCtr() {
+    doneCtr += 1
+    if(doneCtr == numClients){
+      println("="*20)
+      println("I am done! Thank You!")
+      println("="*20)
+      
+      for (x <- 0 to NUMBEROFSERVERASSIGNERS - 1) {
+      ServerAssignService(x) ! "stop"
+    }
+      
+      context.stop(self)
+      ac.shutdown
+    }
+  }
 
   def routeTweetMessage(sender: ActorRef, tweetText: String) {
     // generate tweet ID, put onto tweet table and pass to worker
-    if (true) {
+    if (DEBUG) {
       println("tweet : " + tweetText)
     }
     tweetIDCtr += 1
