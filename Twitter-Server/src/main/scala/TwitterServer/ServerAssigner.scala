@@ -153,14 +153,14 @@ class ServerAssigner(numUsers: Int, ac: ActorSystem, myID:Int, NUMBEROFSERVERASS
 
  def returnQueue(requestorID: Int, senderActor: ActorRef) {
     //return the queue for requestorID
-    if(true){
+    if(DEBUG){
       println("#"*200)
       println("inside returnQueue")
     }
    
    var requiredQ = pagesTable.getOrElse(requestorID, null)
 
-    if (false) {
+    if (DEBUG) {
       if (requiredQ != null) {
         println("requiredQ")
         println(requiredQ.mkString("\n"))
