@@ -5,6 +5,8 @@ import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.Map
 import scala.collection.mutable.HashMap
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 case class tweet(tweetText: String)
 
@@ -15,6 +17,11 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
   // tweetTable : tweetID, text and owner's userID
   // var tweetTable = scala.collection.mutable.HashMap.empty[Int,Tuple2[Int,String]]
   var tweetIDCtr: Int = 0
+  var tweetIDCumulativeCtr: BigInt = 0
+  var requestCtr: BigInt = 0
+  var requestCumulativeCtr: BigInt = 0
+  var secondsCtr : Int = 0 
+  
   var initCtr: Int = 0
   var initClientCtr: Int = 0
   var doneCtr: Int = 0
@@ -56,8 +63,17 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
       for (coordinator <- ClientList) {
         coordinator ! "die"
       }
+      for (x <- 0 to NUMBEROFSERVERASSIGNERS - 1) {
+        ServerAssignService(x) ! "stop"
+      }
+            
+      Thread.sleep(1000)
       
-    case "ThankYou" => incDoneCtr()  
+      // print metrics
+      println("Average Rate of tweet = "+tweetIDCumulativeCtr/secondsCtr + "\nAverage Rate of requests = "+requestCtr/secondsCtr )
+      ac.shutdown
+      
+   // case "ThankYou" => incDoneCtr()  
     
     case _ => println("Received unknown communication from " + sender.path)
   }
@@ -80,6 +96,11 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
     }
     
      var timer = ac.actorOf(Props(new timerActor(self)), "timerActor")
+     timer ! "start"
+     
+     /*// starting metric calculator scheduler
+     println("tweetIDctr\ttweetIDCumulativeCtr\trequestCtr")
+     val tweetScheduler = context.system.scheduler.schedule(0 seconds, 1 seconds)(metricReset)*/
   }
 
   def incInitCtr() {
@@ -114,22 +135,37 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
         coordinator ! "start"
       }
     }
+    
+    // starting metric calculator scheduler
+     println("tweetIDctr\ttweetIDCumulativeCtr\trequestCtr")
+     val tweetScheduler = context.system.scheduler.schedule(0 seconds, 1 seconds)(metricReset)
   }
   
+  /*
   def incDoneCtr() {
     doneCtr += 1
     if(doneCtr == numClients){
       println("="*20)
       println("I am done! Thank You!")
       println("="*20)
-      
+      Thread.sleep(1000)
       for (x <- 0 to NUMBEROFSERVERASSIGNERS - 1) {
       ServerAssignService(x) ! "stop"
     }
       
-      context.stop(self)
+      //context.stop(self)
       ac.shutdown
     }
+  }
+  * 
+  */
+  
+  def metricReset = {
+    println(tweetIDCtr +",\t\t\t"+ tweetIDCumulativeCtr+",\t\t\t"+ requestCtr )
+    
+    tweetIDCtr = 0
+    //requestCtr = 0
+    secondsCtr += 1
   }
 
   def routeTweetMessage(sender: ActorRef, tweetText: String) {
@@ -138,6 +174,7 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
       println("tweet : " + tweetText)
     }
     tweetIDCtr += 1
+    tweetIDCumulativeCtr += 1
 
     val senderpath = sender.path.toString()
     var n = senderpath.lastIndexOf("/");
@@ -151,6 +188,7 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
 
   def routeStatusRequest(sender: ActorRef) {
 
+    requestCtr += 1
     //var senderID = sender.path.toString().substring(26).toInt 
     val senderpath = sender.path.toString()
     var n = senderpath.lastIndexOf("/");
