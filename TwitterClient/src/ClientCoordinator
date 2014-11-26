@@ -1,0 +1,38 @@
+import akka.actor.Actor
+import akka.actor.ActorSystem
+import akka.actor.Props
+
+class ClientCoordinator(totalUsers: Int, numClient: Int, clientID: Int, ServerIP: String, ServerPort: String, sys: ActorSystem) extends Actor {
+
+  var numUsers: Int = totalUsers / numClient
+
+  if (clientID + 1 == numClient) {
+    for (i: Int <- (clientID * numUsers).toInt to totalUsers.toInt - 1) {
+      context.actorOf(Props(new ClientWorker(i.toInt, totalUsers, ServerIP, ServerPort, sys)), name = i.toString)
+    }
+  } else {
+    for (i: Int <- (clientID * numUsers).toInt to (numUsers * (clientID + 1) - 1).toInt) {
+      context.actorOf(Props(new ClientWorker(i.toInt, totalUsers, ServerIP, ServerPort, sys)), name = i.toString)
+    }
+  }
+  
+  var url:String = "akka.tcp://TwitterServer@"+ServerIP+":"+ServerPort+"/user/ServerRouter"
+  var server = sys.actorSelection(url)
+  server ! "hi"
+
+  def receive = {
+    case "start" =>
+      println("Received Start from server")
+      for (child <- context.children) {
+        println(child.path)
+        child ! "start"
+      }
+
+    case "die" =>
+      for (child <- context.children) {
+        child ! "die"
+      }
+
+    case _ => println("default case for Client Coordinator")
+  }
+} 
