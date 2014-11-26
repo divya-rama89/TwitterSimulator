@@ -22,9 +22,7 @@ class ClientCoordinator(totalUsers: Int, numClient: Int, clientID: Int, ServerIP
 
   def receive = {
     case "start" =>
-      println("Received Start from server")
       for (child <- context.children) {
-        println(child.path)
         child ! "start"
       }
 
@@ -35,4 +33,4 @@ class ClientCoordinator(totalUsers: Int, numClient: Int, clientID: Int, ServerIP
 
     case _ => println("default case for Client Coordinator")
   }
-} 
+}
