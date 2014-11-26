@@ -1,3 +1,4 @@
+
 import akka.actor.{ ActorRef, ActorSystem, Props, Actor }
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.ListBuffer
@@ -19,7 +20,7 @@ class ServerAssigner(numUsers: Int, ac: ActorSystem, myID:Int, NUMBEROFSERVERASS
   var myServerAssignList = new ArrayBuffer[ActorRef]
   
   // constants
-  val DEBUG = true
+  val DEBUG = false
   
   // TODO
   // schedule to request for tweets and act on them
@@ -52,7 +53,7 @@ class ServerAssigner(numUsers: Int, ac: ActorSystem, myID:Int, NUMBEROFSERVERASS
       var quantity = rnd.nextInt(FOLLOWERSLIMIT)
       var seq: ListBuffer[Int] = new ListBuffer
       
-      print("x = "+x)
+      
       for(y <- 0 to quantity) {
         var randomNumber = rnd.nextInt(numUsers-1)
         while((randomNumber < 0) || (seq.contains(randomNumber))) {
@@ -61,7 +62,9 @@ class ServerAssigner(numUsers: Int, ac: ActorSystem, myID:Int, NUMBEROFSERVERASS
       seq += randomNumber
       
       }  
-      seq += x
+      if(!seq.contains(x)){
+    	  seq += x
+      }
       
       if(DEBUG) {
       println("for owner : "+x)
@@ -84,7 +87,7 @@ class ServerAssigner(numUsers: Int, ac: ActorSystem, myID:Int, NUMBEROFSERVERASS
     
     var retrievedFollowers:ListBuffer[Int] = followersTable.getOrElse(ownerID, null)
     
-    if(DEBUG) {
+    if(true) {
     	if(retrievedFollowers != null) {
     		println("retrievedFollowers for given ownerID "+ownerID)   
     		//retrievedFollowers.foreach { i =>println(i)
@@ -94,7 +97,7 @@ class ServerAssigner(numUsers: Int, ac: ActorSystem, myID:Int, NUMBEROFSERVERASS
     
     var partitionedFollowers = retrievedFollowers.groupBy(x=>x % NUMBEROFSERVERASSIGNERS)
     
-    if(DEBUG) {
+    if(true) {
     	println("partitioned followers for given ownerID "+ownerID)
     	partitionedFollowers.foreach { i => println(i) }
     }
@@ -103,7 +106,7 @@ class ServerAssigner(numUsers: Int, ac: ActorSystem, myID:Int, NUMBEROFSERVERASS
     
     for(x <- 0 to NUMBEROFSERVERASSIGNERS-1) {
     	var temp = partitionedFollowers.getOrElse((x),null)
-    	println(temp)
+    	
     	if (temp!= null) {
     	  if(DEBUG){
     		  println(temp)
@@ -117,10 +120,11 @@ class ServerAssigner(numUsers: Int, ac: ActorSystem, myID:Int, NUMBEROFSERVERASS
   
   def updateTweetQueue(tweetText: String, ownerID: Int, followerSubList: ListBuffer[Int]) {
     //update queue for each user in followerSubList
-    println("I received data : " + followerSubList)
+    //println("I received this follower list : " + followerSubList)
     // for every member of the followerSubList, add new tweet to the queue
+    
+    var newMember = new Tuple2(tweetText, ownerID)
     for (member <- followerSubList) {
-      var newMember = new Tuple2(tweetText, ownerID)
 
       //get queue from pagesTable
       var tweetsQ = pagesTable.getOrElse(member, null)
@@ -153,20 +157,23 @@ class ServerAssigner(numUsers: Int, ac: ActorSystem, myID:Int, NUMBEROFSERVERASS
 
  def returnQueue(requestorID: Int, senderActor: ActorRef) {
     //return the queue for requestorID
-    if(DEBUG){
+    if(true){
+      println("#"*200)
       println("inside returnQueue")
     }
    
    var requiredQ = pagesTable.getOrElse(requestorID, null)
-    
-    if(DEBUG){
-      println("requiredQ")
-      println(requiredQ)
+
+    if (false) {
+      if (requiredQ != null) {
+        println("requiredQ")
+        println(requiredQ.mkString("\n"))
+      }
     }
     
     if (requiredQ != null) {
-         
-       senderActor ! receiveBackTweetQueue(requiredQ)
+      
+      senderActor ! (requiredQ)
     }
   }
 
