@@ -19,10 +19,10 @@ Akka : 2.3.6
 SBT : 0.13.6
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
-Inside root folder 'TwitterSimulator', copy the folder 'TwitterClient' on client machine(s) and 'Twitter-Server' on the server machine. 
+Inside root folder 'TwitterSimulator', copy the folder 'TClient' on client machine(s) and 'Server' on the server machine. 
 Go to project rootFolder by doing cd TwitterSimulator/<respective client/server foldername>
-For example, on client => type cd  TwitterSimulator/TwitterClient
-on server => type cd  TwitterSimulator/Twitter-Server
+For example, on client => type cd  TwitterSimulator/Client
+on server => type cd  TwitterSimulator/Server
 
 Do the following commands on client and server machines
 ------------------------------------------------------------------
@@ -32,7 +32,7 @@ src/main/resources/application.conf
 In the file, change the ip address(hostname field) and port (port field) for each machine to reflect their own IP address and port.
 
 
-Now from the initial outer folder (Twitter-Server or TwitterClient) do:
+Now from the initial outer folder (Server or Client) do:
 
 sbt publishLocal
 
@@ -55,3 +55,4 @@ Details:
 2. The number of tweets and requests and number of followers have been scaled for our system.
 3. The largest number of users the code has been tested for is 1000000 users with a single client machine. The average tweets/second observed for these many users was 1917 tweets/second. The reflected results are influenced by number of users, their tweeting frequency, the frequency at which the timeline is requested from the server and the network connecting the server-client machines. 
 4. An event (such as a sports event or big news) that leads to a peak in the tweet rate has also been simulated.
+
