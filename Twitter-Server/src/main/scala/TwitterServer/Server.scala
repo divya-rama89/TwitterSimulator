@@ -1,17 +1,22 @@
 import akka.actor.{Props, ActorSystem}
+import com.typesafe.config.ConfigFactory
 
 
-object Server {
+object ServerMain {
 def main(args: Array[String]): Unit = {
-     
-     // 2 args : numUsers
-     val numUsers = (args(0).toInt)
-     
-     println("args are "+ numUsers)
      
      val system = ActorSystem("TwitterServer")
 
-     val ServerRouterService = system.actorOf(Props(new ServerRouter(numUsers, system)), "ServerRouter")
+     var numUsers:Int = 0
+     var numCli:Int = 0
+     if(args.length > 1){
+    	 numUsers = (args(0).toInt)
+    	 numCli = args(1).toInt
+     } else {
+       println("Usage : Server.scala <Number of Users> <Number of Clients>")
+     }
+               
+     val ServerRouterService = system.actorOf(Props(new ServerRouter(numUsers, numCli, system)), "ServerRouter")
      println("path is " + ServerRouterService.path)
      ServerRouterService ! "Init"
      ServerRouterService ! "test"
