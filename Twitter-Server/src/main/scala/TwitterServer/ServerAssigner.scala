@@ -1,4 +1,3 @@
-
 import akka.actor.{ ActorRef, ActorSystem, Props, Actor }
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.ListBuffer
@@ -8,8 +7,6 @@ import scala.collection.mutable.ArrayBuffer
 case class tweetReceived(tweetText: String, ownerID: Int)
 case class updateTimeline(tweetText: String, ownerID: Int, followerSubList: ListBuffer[Int])
 case class requestStatus(requestorID: Int, senderActor: ActorRef)
-case class followersListSend(user: Int, followersList: ListBuffer[Int])
-case class tweetTableSend(tweetTableLatest: HashMap[Int, Tuple2[Int, String]])
 case class AssignersListSend(ServerAssignService : ArrayBuffer[ActorRef])
 
 class ServerAssigner(numUsers: Int, ac: ActorSystem, myID:Int, NUMBEROFSERVERASSIGNERS:Int, FOLLOWERSLIMIT:Int) extends Actor {
@@ -31,10 +28,9 @@ class ServerAssigner(numUsers: Int, ac: ActorSystem, myID:Int, NUMBEROFSERVERASS
     case "begin" => println("Initialisation done...")
     case updateTimeline(tweetText: String, ownerID: Int, followerSubList: ListBuffer[Int]) => updateTweetQueue(tweetText: String, ownerID: Int, followerSubList: ListBuffer[Int])
     case requestStatus(requestorID: Int, senderActor: ActorRef) => returnQueue(requestorID: Int, senderActor: ActorRef)
-    case tweetTableSend(tweetTableLatest: HashMap[Int, Tuple2[Int, String]]) => updateTweetTable(tweetTableLatest: HashMap[Int, Tuple2[Int, String]])
-    case followersListSend(user: Int, followersList: ListBuffer[Int]) => updateFollowersTable(user: Int, followersList: ListBuffer[Int])
     case AssignersListSend(serverAssignService : ArrayBuffer[ActorRef]) => buildServerAssignRef(serverAssignService:ArrayBuffer[ActorRef])
     case tweetReceived(tweetText: String, ownerID: Int) => sendAllFollowersInfo(tweetText: String, ownerID: Int)
+    case "stop" => context.stop(self)
   }
 
   def init(router: ActorRef) {
@@ -87,7 +83,7 @@ class ServerAssigner(numUsers: Int, ac: ActorSystem, myID:Int, NUMBEROFSERVERASS
     
     var retrievedFollowers:ListBuffer[Int] = followersTable.getOrElse(ownerID, null)
     
-    if(true) {
+    if(DEBUG) {
     	if(retrievedFollowers != null) {
     		println("retrievedFollowers for given ownerID "+ownerID)   
     		//retrievedFollowers.foreach { i =>println(i)
@@ -97,7 +93,7 @@ class ServerAssigner(numUsers: Int, ac: ActorSystem, myID:Int, NUMBEROFSERVERASS
     
     var partitionedFollowers = retrievedFollowers.groupBy(x=>x % NUMBEROFSERVERASSIGNERS)
     
-    if(true) {
+    if(DEBUG) {
     	println("partitioned followers for given ownerID "+ownerID)
     	partitionedFollowers.foreach { i => println(i) }
     }
