@@ -16,7 +16,7 @@ class timerActor(actor: ActorRef) extends Actor{
     //this method blocks for 5 minutes
   	case start => 
       var startTime = System.currentTimeMillis()
-      while(System.currentTimeMillis() < startTime + 120000){
+      while(System.currentTimeMillis() < startTime + 100000){
         
       } 
       //send message to remoteListener that time is up and you need to stop the code 
