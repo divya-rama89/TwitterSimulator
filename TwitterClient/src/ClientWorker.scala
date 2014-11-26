@@ -22,52 +22,45 @@ class ClientWorker(UID:Int, totalUsers:Long, serIP:String,serPort:String, sys:Ac
   def receive = {
     
     case "start" => start()
-      //println("Received Start from parent")
- /* var url:String = "akka.tcp://TwitterServer@"+serIP+":"+serPort+"/user/ServerRouter"
-  var server = sys.actorSelection(url)
-  server ! "test"*/
-      
-      
-    /*case "ack" => println("Can talk to server too")*/
-    
-    case "tweet" => 
-      var start : Int = Random.nextInt(1500)
-      var text:String = harryPotter .substring(start,start+140)
-      self ! ("TweetReq", text)
-    
-    case ("TweetReq", text:String) => 
-      println(UID + " tweeted = " + text)
-    
-    case "request" => 
-      println(UID+"requesting")
-      numReq += 1      
-      
-    case ("Reply", list:List[String]) =>
-      println(list.mkString("\n"))
-      reqRecvd += 1
-    
+
     case (requiredQ :Queue[Tuple2[String, Int]]) => {
       if(!requiredQ.isEmpty) {
       requiredQ.foreach { i=>
-        println("Queue entry - owner:"+ i._2 )
-        println("Tweet:"+ i._1 )
-        println("-"*20)
+        //println("For User:::::::"+UID+" Queue entry - owner:"+ i._2 +" Tweet:"+ i._1 )
+        //println("-"*20)
       }
      }
     }
       
-    case _ => println("Default case for ClientWorker")
+    case x => println("Default "+UID+" "+x + " "+ sender.path)
+
+  }
+  
+  def request = {
+	  server ! "request"
+  }
+  
+  def tweet = {
+    var start : Int = Random.nextInt(1500)
+      var text:String = harryPotter .substring(start,start+140)
+      println(UID+":::::::"+text)
+      server ! ("TweetReq", text)
   }
   
   def start() = {
-    //println(self.path + " has received start signal")
+    /*//for(i:Int <- 0 to 3) {
+      tweet
+    //}
+    println("Messages sent now requesting")
+	server ! "request"*/
+    
     if (freq != 1){
-      val tweetScheduler = context.system.scheduler.schedule(0 seconds, 10 / freq minutes, self, server ! ("TweetReq", "This is a tweet"))
+      val tweetScheduler = context.system.scheduler.schedule(0 seconds, 10.toDouble / freq.toDouble minutes)(tweet)
     } else {
-      println("time / freq = "+ UID/totalUsers*10)
-      val tweetScheduler = context.system.scheduler.schedule((UID/totalUsers*10) minutes, 0 seconds, self, server ! ("TweetReq","substring of text"))
+      //println("time / freq = "+ (UID.toDouble/totalUsers.toDouble*10).toInt)
+      val tweetScheduler = context.system.scheduler.schedule((UID.toDouble/totalUsers.toDouble*10.0).toInt minutes, 0 seconds)(tweet)
     }
-    val requestScheduler = context.system.scheduler.schedule(5 seconds, 1 seconds, self, server ! "request")
-    val eventScheduler = context .system.scheduler.scheduleOnce(20 seconds)(self ! "tweetme")
+    val requestScheduler = context.system.scheduler.schedule(5 seconds, 1 seconds)(request)
+    val eventScheduler = context .system.scheduler.scheduleOnce(20 seconds)(tweet)
   }
 }
