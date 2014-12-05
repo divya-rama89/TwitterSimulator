@@ -12,7 +12,7 @@ case class tweet(tweetText: String)
 
 class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Actor {
 
-  val ServerAssignService: ArrayBuffer[ActorRef] = new ArrayBuffer[ActorRef]
+  //val ServerAssignService: ArrayBuffer[ActorRef] = new ArrayBuffer[ActorRef]
 
   // tweetTable : tweetID, text and owner's userID
   // var tweetTable = scala.collection.mutable.HashMap.empty[Int,Tuple2[Int,String]]
@@ -42,7 +42,7 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
   def receive = {
 
     case "Init" => init() //generate actors + users/followers table
-
+    case "init2" => init2()
     case "hi" =>
       println("Received Communication from some client")
       incClientCtr(sender)
@@ -64,8 +64,11 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
         coordinator ! "die"
       }
       for (x <- 0 to NUMBEROFSERVERASSIGNERS - 1) {
-        ServerAssignService(x) ! "stop"
-      }
+       var selection = context.child(x.toString).getOrElse(null)
+       if(selection != null)   {   
+           selection ! "stop"
+       }
+     }
             
       Thread.sleep(1000)
       
@@ -82,13 +85,18 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
 
     // Create NUMBEROFSERVERASSIGNERS ServerAssigners
     for (x <- 0 to NUMBEROFSERVERASSIGNERS - 1) {
-      ServerAssignService += ac.actorOf(Props(new ServerAssigner(numUsers, ac, x, NUMBEROFSERVERASSIGNERS, FOLLOWERSLIMIT)), "ServerAssigner" + x)
+      //ServerAssignService += ac.actorOf(Props(new ServerAssigner(numUsers, ac, x, NUMBEROFSERVERASSIGNERS, FOLLOWERSLIMIT)), "ServerAssigner" + x)
+	  context.actorOf(Props(new ServerAssigner(numUsers, ac, x, NUMBEROFSERVERASSIGNERS, FOLLOWERSLIMIT)), x.toString)
       //	println("path is " + ServerAssignService(x).path)		
     }
 
     for (x <- 0 to NUMBEROFSERVERASSIGNERS - 1) {
-      ServerAssignService(x) ! "init"
-      ServerAssignService(x) ! AssignersListSend(ServerAssignService)
+   var selection = context.child(x.toString).getOrElse(null)
+       if(selection != null)   {   
+           selection ! "init"
+//    	   println("selection ="+ selection.path)
+       }
+
     }
 
     if (DEBUG) {
@@ -102,6 +110,14 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
      println("tweetIDctr\ttweetIDCumulativeCtr\trequestCtr")
      val tweetScheduler = context.system.scheduler.schedule(0 seconds, 1 seconds)(metricReset)*/
   }
+  
+  def init2() {
+   println("inside init2") 
+    for (x <- 0 to NUMBEROFSERVERASSIGNERS - 1) {
+    	var selection = context.actorSelection("akka://TwitterServer/user/ServerRouter0/"+x) //("../"+0)
+    	selection ! "hi"
+     }
+  }
 
   def incInitCtr() {
     var x = 0
@@ -113,9 +129,9 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
 
       // safe to send test tweet  
       if (DEBUG) {
-        //val dummy = ac.actorOf(Props(new TwitterClient(ac)), "3")
-        //println("path of dummy  is " + dummy.path)
-        //dummy ! "test" 
+        val dummy = ac.actorOf(Props(new TwitterClient(ac)), "3")
+        println("path of dummy  is " + dummy.path)
+        dummy ! "test" 
       }
     }
   }
@@ -150,8 +166,12 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
       println("="*20)
       Thread.sleep(1000)
       for (x <- 0 to NUMBEROFSERVERASSIGNERS - 1) {
-      ServerAssignService(x) ! "stop"
-    }
+       var selection = context.child(x.toString).getOrElse(null)
+       if(selection != null)   {   
+           selection ! "stop"
+    //	   println("selection ="+ selection.path)
+       }
+     }
       
       //context.stop(self)
       ac.shutdown
@@ -181,8 +201,9 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
     var ownerID = senderpath.substring(n + 1).toInt
 
     //tweetTable.put(tweetIDCtr, tweetInfo)
-
-    ServerAssignService(ownerID % NUMBEROFSERVERASSIGNERS) ! tweetReceived(tweetText, ownerID)
+    
+    var selection = context.actorSelection("akka://TwitterServer/user/ServerRouter0/"+(ownerID % NUMBEROFSERVERASSIGNERS)) 
+    selection ! tweetReceived(tweetText, ownerID)
 
   }
 
@@ -204,7 +225,8 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
     * 
     */
 
-    ServerAssignService(senderID % NUMBEROFSERVERASSIGNERS) ! requestStatus(senderID, sender)
+    var selection = context.actorSelection("akka://TwitterServer/user/ServerRouter0/"+(senderID % NUMBEROFSERVERASSIGNERS)) 
+   selection ! requestStatus(senderID, sender)
     if (DEBUG) {
       println("sent")
     }
