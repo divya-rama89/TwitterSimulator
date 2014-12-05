@@ -14,7 +14,7 @@ class ServerAssigner(numUsers: Int, ac: ActorSystem, myID:Int, NUMBEROFSERVERASS
   var tweetTable = HashMap.empty[Int, Tuple2[Int, String]]
   var pagesTable = HashMap.empty[Int, Queue[Tuple2[String, Int]]]
   var followersTable = HashMap.empty[Int,ListBuffer[Int]]
-  var myServerAssignList = new ArrayBuffer[ActorRef]
+ // var myServerAssignList = new ArrayBuffer[ActorRef]
   
   // constants
   val DEBUG = false
@@ -28,7 +28,7 @@ class ServerAssigner(numUsers: Int, ac: ActorSystem, myID:Int, NUMBEROFSERVERASS
     case "begin" => println("Initialisation done...")
     case updateTimeline(tweetText: String, ownerID: Int, followerSubList: ListBuffer[Int]) => updateTweetQueue(tweetText: String, ownerID: Int, followerSubList: ListBuffer[Int])
     case requestStatus(requestorID: Int, senderActor: ActorRef) => returnQueue(requestorID: Int, senderActor: ActorRef)
-    case AssignersListSend(serverAssignService : ArrayBuffer[ActorRef]) => buildServerAssignRef(serverAssignService:ArrayBuffer[ActorRef])
+   // case AssignersListSend(serverAssignService : ArrayBuffer[ActorRef]) => buildServerAssignRef(serverAssignService:ArrayBuffer[ActorRef])
     case tweetReceived(tweetText: String, ownerID: Int) => sendAllFollowersInfo(tweetText: String, ownerID: Int)
     case "stop" => context.stop(self)
   }
@@ -108,7 +108,7 @@ class ServerAssigner(numUsers: Int, ac: ActorSystem, myID:Int, NUMBEROFSERVERASS
     		  println(temp)
     	  }  
     	  
-    	myServerAssignList(x) !  updateTimeline(tweetText, ownerID, temp)			
+    	context.actorSelection("akka://TwitterServer/user/ServerRouter0/"+(x)) !  updateTimeline(tweetText, ownerID, temp)			
     	}
     }  
     
@@ -184,19 +184,6 @@ class ServerAssigner(numUsers: Int, ac: ActorSystem, myID:Int, NUMBEROFSERVERASS
     	followersTable.put(user,followersList)
     }
   }
-  
-  def buildServerAssignRef(serverAssignList:ArrayBuffer[ActorRef]) {
-    if (!(serverAssignList.isEmpty)) { 
-    	myServerAssignList = serverAssignList.clone
-    }
-    if(DEBUG){
-      println("="*20)
-      println("myServerAssignList")
-      myServerAssignList.foreach {
-        i => println(i)
-      }
-      println("="*20)
-    }
-  }
+
 
 }
