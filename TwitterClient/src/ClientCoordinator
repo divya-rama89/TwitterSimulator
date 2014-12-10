@@ -17,7 +17,8 @@ class ClientCoordinator(totalUsers: Int, numClient: Int, clientID: Int, ServerIP
     }
   }
   
-  var url:String = "akka.tcp://TwitterServer@"+ServerIP+":"+ServerPort+"/user/ServerRouter"
+  var randAssigner: String = Integer.toString(Random.nextInt(4))
+  var url: String = "akka.tcp://TwitterServer@" + serIP + ":" + serPort + "/user/ServerRouter"+randAssigner 
   var server = sys.actorSelection(url)
   server ! "hi"
 
