@@ -126,13 +126,13 @@ class ServerRouter(numUsers: Int, numClients: Int, ac: ActorSystem) extends Acto
       if (DEBUG) {
         println("All assigners initialised!")
       }
-
+/*
       // safe to send test tweet  
       if (DEBUG) {
         val dummy = ac.actorOf(Props(new TwitterClient(ac)), "3")
         println("path of dummy  is " + dummy.path)
         dummy ! "test" 
-      }
+      } */
     }
   }
 
